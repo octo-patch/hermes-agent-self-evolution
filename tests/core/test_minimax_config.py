@@ -11,6 +11,7 @@ from evolution.core.config import EvolutionConfig, MINIMAX_MODELS, MINIMAX_BASE_
 
 # Provide a dummy hermes_agent_path so EvolutionConfig() doesn't auto-discover
 _DUMMY_PATH = Path("/tmp")
+_TEST_KEY = "offline-test-key"
 
 
 class TestMinimaxConstants:
@@ -69,7 +70,7 @@ class TestMakeLm:
             config_with_key.make_lm(model)
         make_lm.assert_called_once_with(
             f"openai/{model.split('/')[-1]}",
-            api_key="sk-minimax-testkey",
+            api_key=_TEST_KEY,
             base_url=MINIMAX_BASE_URL,
             temperature=1.0,
         )
@@ -87,7 +88,7 @@ class TestMakeLm:
 
     @pytest.fixture
     def config_with_key(self):
-        with patch.dict(os.environ, {"MINIMAX_API_KEY": "sk-minimax-testkey"}):
+        with patch.dict(os.environ, {"MINIMAX_API_KEY": _TEST_KEY}):
             return EvolutionConfig(hermes_agent_path=_DUMMY_PATH)
 
     def test_make_lm_minimax_bare_model_id(self, config_with_key):
@@ -98,7 +99,7 @@ class TestMakeLm:
 
         mock_dspy_lm.assert_called_once_with(
             "openai/MiniMax-M3",
-            api_key="sk-minimax-testkey",
+            api_key=_TEST_KEY,
             base_url=MINIMAX_BASE_URL,
             temperature=1.0,
         )
@@ -112,7 +113,7 @@ class TestMakeLm:
 
         mock_dspy_lm.assert_called_once_with(
             "openai/MiniMax-M3",
-            api_key="sk-minimax-testkey",
+            api_key=_TEST_KEY,
             base_url=MINIMAX_BASE_URL,
             temperature=1.0,
         )
@@ -125,7 +126,7 @@ class TestMakeLm:
 
         mock_dspy_lm.assert_called_once_with(
             "openai/MiniMax-M3",
-            api_key="sk-minimax-testkey",
+            api_key=_TEST_KEY,
             base_url=MINIMAX_BASE_URL,
             temperature=1.0,
         )
@@ -138,7 +139,7 @@ class TestMakeLm:
 
         mock_dspy_lm.assert_called_once_with(
             "openai/MiniMax-M2.7",
-            api_key="sk-minimax-testkey",
+            api_key=_TEST_KEY,
             base_url=MINIMAX_BASE_URL,
             temperature=1.0,
         )
@@ -151,7 +152,7 @@ class TestMakeLm:
 
         mock_dspy_lm.assert_called_once_with(
             "openai/MiniMax-M2.7-highspeed",
-            api_key="sk-minimax-testkey",
+            api_key=_TEST_KEY,
             base_url=MINIMAX_BASE_URL,
             temperature=1.0,
         )

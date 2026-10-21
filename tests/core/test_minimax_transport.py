@@ -10,6 +10,9 @@ import pytest
 from evolution.core.config import EvolutionConfig, MINIMAX_MODELS
 
 
+_TEST_KEY = "offline-test-key"
+
+
 @pytest.mark.parametrize("base_url", [
     "https://api.minimax.io/v1",
     "https://api.minimax.cn/v1",
@@ -37,7 +40,7 @@ def test_serialized_chat_request(monkeypatch, base_url, model):
 
     monkeypatch.setattr(httpx.Client, "send", send)
     config = EvolutionConfig(
-        hermes_agent_path=Path("."), minimax_api_key="offline-test-key",
+        hermes_agent_path=Path("."), minimax_api_key=_TEST_KEY,
         minimax_base_url=base_url,
     )
     lm = config.make_lm(model)
