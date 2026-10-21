@@ -9,13 +9,14 @@ if TYPE_CHECKING:
     import dspy
 
 
-# MiniMax model IDs supported via the OpenAI-compatible endpoint.
-# Only Chat models — MiniMax has no Embedding model.
+# Ordinary MiniMax chat choices, with the default first.
 MINIMAX_MODELS = (
-    "MiniMax-M3",              # Latest: 512K context, 128K max output, image input. Default.
-    "MiniMax-M2.7",            # Previous generation.
-    "MiniMax-M2.7-highspeed",  # Previous generation, lower latency.
+    "MiniMax-M3.1-Flash",
+    "MiniMax-M3",
 )
+
+# Preserve explicitly selected legacy IDs without advertising them as choices.
+_MINIMAX_LEGACY_MODELS = ("MiniMax-M2.7", "MiniMax-M2.7-highspeed")
 
 MINIMAX_BASE_URL = "https://api.minimax.io/v1"
 
@@ -64,19 +65,25 @@ class EvolutionConfig:
     def make_lm(self, model: str) -> "dspy.LM":
         """Create a DSPy LM instance, with MiniMax routing handled automatically.
 
-        For MiniMax models (MiniMax-M3, MiniMax-M2.7, MiniMax-M2.7-highspeed), this
-        sets the correct base URL and API key. Pass either the bare model ID or a
-        prefixed form such as ``minimax/MiniMax-M3`` or ``openai/MiniMax-M3``.
+        For current and explicitly selected legacy MiniMax models, this sets
+        the base URL and API key. Pass a bare model ID or a direct prefix such
+        as ``minimax/MiniMax-M3.1-Flash`` or ``openai/MiniMax-M3.1-Flash``.
+        Custom IDs with the explicit ``minimax/`` prefix also use this route.
 
         All other models are forwarded to ``dspy.LM`` unchanged, so existing
         OpenAI / OpenRouter / LiteLLM strings continue to work.
         """
         import dspy
 
-        # Strip any provider prefix (e.g. "openai/", "minimax/") to get the bare ID
-        bare = model.split("/")[-1]
+        prefix, separator, bare = model.partition("/")
+        if not separator:
+            bare, prefix = model, ""
+        known_model = bare in MINIMAX_MODELS + _MINIMAX_LEGACY_MODELS
+        direct_model = (
+            prefix == "minimax" and bool(bare) and "/" not in bare
+        ) or (prefix in ("", "openai") and known_model)
 
-        if bare in MINIMAX_MODELS:
+        if direct_model:
             if not self.minimax_api_key:
                 raise ValueError(
                     f"MINIMAX_API_KEY is not set. Export it before using '{bare}'."

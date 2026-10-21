@@ -15,17 +15,15 @@ _DUMMY_PATH = Path("/tmp")
 
 class TestMinimaxConstants:
     def test_minimax_models_contains_expected_ids(self):
-        assert "MiniMax-M3" in MINIMAX_MODELS
-        assert "MiniMax-M2.7" in MINIMAX_MODELS
-        assert "MiniMax-M2.7-highspeed" in MINIMAX_MODELS
+        assert MINIMAX_MODELS == ("MiniMax-M3.1-Flash", "MiniMax-M3")
 
-    def test_minimax_m3_is_default(self):
-        # M3 must be the first entry so MINIMAX_MODELS[0] resolves to it.
-        assert MINIMAX_MODELS[0] == "MiniMax-M3"
+    def test_minimax_flash_is_default(self):
+        assert MINIMAX_MODELS[0] == "MiniMax-M3.1-Flash"
 
     def test_older_models_removed(self):
         # M1/M2/M2.1/M2.5 must not appear in the supported list.
-        for old in ("MiniMax-M1", "MiniMax-M2", "MiniMax-M2.1", "MiniMax-M2.5"):
+        for old in ("MiniMax-M1", "MiniMax-M2", "MiniMax-M2.1", "MiniMax-M2.5",
+                    "MiniMax-M2.7", "MiniMax-M2.7-highspeed"):
             assert old not in MINIMAX_MODELS
 
     def test_minimax_base_url(self):
@@ -62,6 +60,31 @@ class TestEvolutionConfigMinimaxDefaults:
 
 
 class TestMakeLm:
+    @pytest.mark.parametrize("model", [
+        "MiniMax-M3.1-Flash", "minimax/MiniMax-M3.1-Flash",
+        "openai/MiniMax-M3.1-Flash", "minimax/custom-model",
+    ])
+    def test_flash_and_explicit_custom_routing(self, model, config_with_key):
+        with patch("dspy.LM") as make_lm:
+            config_with_key.make_lm(model)
+        make_lm.assert_called_once_with(
+            f"openai/{model.split('/')[-1]}",
+            api_key="sk-minimax-testkey",
+            base_url=MINIMAX_BASE_URL,
+            temperature=1.0,
+        )
+
+    @pytest.mark.parametrize("model", [
+        "openrouter/minimax/MiniMax-M3",
+        "openrouter/minimax/minimax-m3.1-flash:free",
+        "gateway/MiniMax-M3.1-Flash", "gateway/MiniMax-M2.7",
+    ])
+    def test_gateway_routing_is_preserved(self, model):
+        config = EvolutionConfig(hermes_agent_path=_DUMMY_PATH, minimax_api_key="")
+        with patch("dspy.LM") as make_lm:
+            config.make_lm(model)
+        make_lm.assert_called_once_with(model)
+
     @pytest.fixture
     def config_with_key(self):
         with patch.dict(os.environ, {"MINIMAX_API_KEY": "sk-minimax-testkey"}):

@@ -39,8 +39,8 @@ def evolve(
     iterations: int = 10,
     eval_source: str = "synthetic",
     dataset_path: Optional[str] = None,
-    optimizer_model: str = "openai/gpt-4.1",
-    eval_model: str = "openai/gpt-4.1-mini",
+    optimizer_model: Optional[str] = None,
+    eval_model: Optional[str] = None,
     hermes_repo: Optional[str] = None,
     run_tests: bool = False,
     dry_run: bool = False,
@@ -48,9 +48,10 @@ def evolve(
 ):
     """Main evolution function — orchestrates the full optimization loop."""
 
-    if use_minimax:
-        optimizer_model = f"minimax/{MINIMAX_MODELS[0]}"
-        eval_model = f"minimax/{MINIMAX_MODELS[0]}"
+    if optimizer_model is None:
+        optimizer_model = f"minimax/{MINIMAX_MODELS[0]}" if use_minimax else "openai/gpt-4.1"
+    if eval_model is None:
+        eval_model = f"minimax/{MINIMAX_MODELS[0]}" if use_minimax else "openai/gpt-4.1-mini"
 
     config = EvolutionConfig(
         iterations=iterations,
@@ -305,8 +306,8 @@ def evolve(
 @click.option("--eval-source", default="synthetic", type=click.Choice(["synthetic", "golden", "sessiondb"]),
               help="Source for evaluation dataset")
 @click.option("--dataset-path", default=None, help="Path to existing eval dataset (JSONL)")
-@click.option("--optimizer-model", default="openai/gpt-4.1", help="Model for GEPA reflections")
-@click.option("--eval-model", default="openai/gpt-4.1-mini", help="Model for evaluations")
+@click.option("--optimizer-model", default=None, help="Model for GEPA reflections (default: openai/gpt-4.1, or MiniMax-M3.1-Flash with --use-minimax)")
+@click.option("--eval-model", default=None, help="Model for evaluations (default: openai/gpt-4.1-mini, or MiniMax-M3.1-Flash with --use-minimax)")
 @click.option("--hermes-repo", default=None, help="Path to hermes-agent repo")
 @click.option("--run-tests", is_flag=True, help="Run full pytest suite as constraint gate")
 @click.option("--dry-run", is_flag=True, help="Validate setup without running optimization")
